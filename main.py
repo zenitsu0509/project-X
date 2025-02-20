@@ -1,16 +1,20 @@
-from phi.agent import Agent, RunResponse
-from phi.model.groq import Groq
+import groq
 from dotenv import load_dotenv
-from phi.tools.yfinance import YFinanceTools
 import os
-load_dotenv()
-agent = Agent(
-    model=Groq(id="llama-3.3-70b-versatile"),
-    tools = [YFinanceTools(stock_price=True,analyst_recommendations=True,stock_fundamentals = True)],
-    markdown=True,
-    show_tool_call = True,
-    instructions = ["use table to display data."]
-)
 
+def generate_quiz(topic):
+    client = groq.Client(api_key=os.getenv("GROQ_API_KEY"))
+    prompt = f"Generate a 5-question multiple-choice quiz on the topic: {topic}. Provide four answer choices for each question and indicate the correct answer."
+    
+    response = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "system", "content": "You are a helpful assistant that generates quizzes."},
+                  {"role": "user", "content": prompt}]
+    )
+    
+    return response.choices[0].message.content
 
-agent.print_response("summarize and compaire the stock price of SBI and HDFC")
+# Example usage
+topic = "Machine Learning"
+quiz = generate_quiz(topic)
+print(quiz)
