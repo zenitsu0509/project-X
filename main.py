@@ -2,9 +2,9 @@ import groq
 from dotenv import load_dotenv
 import os
 
-def generate_quiz(topic):
+def generate_quiz(topic,number):
     client = groq.Client(api_key=os.getenv("GROQ_API_KEY"))
-    prompt = f"Generate a 5-question multiple-choice quiz on the topic: {topic}. Provide four answer choices for each question and indicate the correct answer."
+    prompt = f"Generate a {number}-question multiple-choice quiz on the topic: {topic}. Provide four answer choices for each question and indicate the correct answer."
     
     response = client.chat.completions.create(
         model="llama3-8b-8192",
@@ -16,5 +16,5 @@ def generate_quiz(topic):
 
 # Example usage
 topic = "Machine Learning"
-quiz = generate_quiz(topic)
+quiz = generate_quiz(topic,5)
 print(quiz)
