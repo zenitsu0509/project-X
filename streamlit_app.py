@@ -4,6 +4,8 @@ import json
 from dotenv import load_dotenv
 import os
 import re
+import plotly.graph_objects as go
+import plotly.express as px
 
 def format_response_to_json(raw_response):
     """Clean and format the API response to ensure valid JSON"""
@@ -147,6 +149,7 @@ def main():
         # Show results if quiz is submitted
         if st.session_state.quiz_submitted:
             correct_answers = 0
+            incorrect_answers = 0
             st.header("Quiz Results")
             
             for i, q in enumerate(st.session_state.quiz["questions"]):
@@ -159,14 +162,52 @@ def main():
                     correct_answers += 1
                 else:
                     st.error(f"Wrong. Your answer: {user_ans}, Correct answer: {correct_ans}")
+                    incorrect_answers += 1
                 
                 # Display explanation
                 if "explanation" in q:
                     with st.expander("See explanation"):
                         st.write(q["explanation"])
             
+            # Calculate statistics
+            total_questions = len(st.session_state.quiz["questions"])
+            score_percentage = (correct_answers / total_questions) * 100
+            
+            # Create visualizations
+            st.subheader("Result Visualizations")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Pie Chart
+                fig_pie = go.Figure(data=[go.Pie(
+                    labels=['Correct', 'Incorrect'],
+                    values=[correct_answers, incorrect_answers],
+                    hole=.3,
+                    marker_colors=['#00CC96', '#EF553B']
+                )])
+                fig_pie.update_layout(
+                    title="Score Distribution",
+                    height=400
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+            
+            with col2:
+                # Bar Chart
+                fig_bar = go.Figure(data=[
+                    go.Bar(
+                        x=['Correct', 'Incorrect'],
+                        y=[correct_answers, incorrect_answers],
+                        marker_color=['#00CC96', '#EF553B']
+                    )
+                ])
+                fig_bar.update_layout(
+                    title="Number of Correct vs Incorrect Answers",
+                    yaxis_title="Number of Questions",
+                    height=400
+                )
+                st.plotly_chart(fig_bar, use_container_width=True)
+            
             # Display final score with difficulty level
-            score_percentage = (correct_answers / len(st.session_state.quiz["questions"])) * 100
             st.header(f"Final Score: {score_percentage:.1f}% ({difficulty.title()} Level)")
             
             # Score interpretation based on difficulty
