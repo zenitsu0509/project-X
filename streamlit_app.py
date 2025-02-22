@@ -33,13 +33,9 @@ def get_difficulty_description(difficulty):
 
 def generate_quiz(topic, number, difficulty):
     try:
-<<<<<<< HEAD
-        client = groq.Client(api_key=os.getenv("GROQ_API_KEY"))
+        client = groq.Client(api_key=st.secrets("GROQ_API_KEY"))
         difficulty_desc = get_difficulty_description(difficulty)
         
-=======
-        client = groq.Client(api_key=st.secrets("GROQ_API_KEY"))
->>>>>>> dd3efe015e60c2f79a62e5be7bc742fb2211698e
         prompt = f"""Generate a {number}-question multiple-choice quiz on the topic: {topic}.
         The questions should be at {difficulty.upper()} difficulty level, meaning {difficulty_desc}.
         
