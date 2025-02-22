@@ -25,7 +25,7 @@ def format_response_to_json(raw_response):
 
 def generate_quiz(topic, number):
     try:
-        client = groq.Client(api_key=os.getenv("GROQ_API_KEY"))
+        client = groq.Client(api_key=st.secrets("GROQGROQ_API_KEY")
         prompt = f"""Generate a {number}-question multiple-choice quiz on the topic: {topic}.
         The response MUST be a valid JSON object in EXACTLY this format:
         {{
