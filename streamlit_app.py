@@ -27,9 +27,8 @@ def format_response_to_json(raw_response):
         # First try direct JSON parsing
         return json.loads(raw_response)
     except json.JSONDecodeError:
-        # If that fails, try to extract JSON-like content
+       
         try:
-            # Look for content between curly braces
             match = re.search(r'\{.*\}', raw_response, re.DOTALL)
             if match:
                 return json.loads(match.group(0))
