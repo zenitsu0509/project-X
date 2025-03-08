@@ -69,7 +69,9 @@ def generate_quiz(topic, number, difficulty):
                     "explanation": "Brief explanation of why this answer is correct"
                 }}
             ]
-        }}"""
+        }}
+        
+        IMPORTANT: The correct_answer field MUST contain ONLY the letter (A, B, C, or D) without any additional characters."""
 
         response = client.chat.completions.create(
             model="llama3-8b-8192",
@@ -93,6 +95,15 @@ def generate_quiz(topic, number, difficulty):
             st.error("Invalid quiz format. Please try again.")
             return None
             
+        # Standardize the correct_answer format
+        for question in quiz_data["questions"]:
+            # Ensure correct_answer is just a single letter (A, B, C, or D)
+            if len(question["correct_answer"]) > 1:
+                # If it contains more (like "A)" or "A) option"), extract just the letter
+                match = re.match(r'([A-D])', question["correct_answer"])
+                if match:
+                    question["correct_answer"] = match.group(1)
+        
         return quiz_data
 
     except Exception as e:
@@ -153,6 +164,17 @@ def send_email_report(topic, difficulty, score, total_time, correct_answers, tot
         st.error(f"Failed to send email report: {str(e)}")
         return False
 
+def extract_answer_letter(answer_option):
+    """Extract just the letter from an answer option like 'A) Option text'"""
+    if not answer_option:
+        return None
+    
+    # Try to extract the letter using regex
+    match = re.match(r'([A-D])', answer_option)
+    if match:
+        return match.group(1)
+    return None
+
 def main():
     st.title("Quiz Generator")
     
@@ -208,9 +230,11 @@ def main():
                 index=None
             )
             
-            # Store user's answer
+            # Store user's answer - extract just the letter
             if answer:
-                st.session_state.user_answers[i] = answer[0]
+                letter = extract_answer_letter(answer)
+                if letter:
+                    st.session_state.user_answers[i] = letter
             
             st.markdown("---")
         
@@ -237,12 +261,25 @@ def main():
                 user_ans = st.session_state.user_answers.get(i, None)
                 correct_ans = q["correct_answer"]
                 
+                # Debug information (can be removed in production)
                 st.write(f"Question {i+1}:")
+                
                 if user_ans == correct_ans:
-                    st.success(f"Correct! Your answer: {user_ans}")
+                    st.success(f"Correct! Your answer: {user_ans} ({q['options'][ord(user_ans) - ord('A')]})")
                     correct_answers += 1
                 else:
-                    st.error(f"Wrong. Your answer: {user_ans}, Correct answer: {correct_ans}")
+                    # Find the text of the correct answer for better feedback
+                    correct_ans_idx = ord(correct_ans) - ord('A')
+                    correct_ans_text = q['options'][correct_ans_idx] if 0 <= correct_ans_idx < len(q['options']) else correct_ans
+                    
+                    # If user answered
+                    if user_ans:
+                        user_ans_idx = ord(user_ans) - ord('A')
+                        user_ans_text = q['options'][user_ans_idx] if 0 <= user_ans_idx < len(q['options']) else user_ans
+                        st.error(f"Wrong. Your answer: {user_ans} ({user_ans_text}), Correct answer: {correct_ans} ({correct_ans_text})")
+                    else:
+                        st.error(f"No answer provided. Correct answer: {correct_ans} ({correct_ans_text})")
+                    
                     incorrect_answers += 1
                 
                 if "explanation" in q:
